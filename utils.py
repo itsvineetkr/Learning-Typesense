@@ -2,7 +2,7 @@ import typesense
 from dotenv import load_dotenv
 import os
 
-
+load_dotenv()
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY")
 
 
@@ -18,3 +18,15 @@ class Typesense:
             }
         )
     
+    def create_collection(self, schema, file_path, file_type):
+        try:
+            self.client.collections.create(schema=schema)
+            with open(file_path) as file:
+                self.client.collections[schema['name']].documents.import_(file.read().encode('utf-8'))
+
+        except Exception as e:
+            return e
+
+
+# symantic and hybrid search and keyword search
+
