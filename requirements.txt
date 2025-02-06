@@ -1,0 +1,5 @@
+typesense
+pandas
+streamlit
+python-dotenv
+requests
