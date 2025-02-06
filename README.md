@@ -1,6 +1,6 @@
-# This is a streamlit application to demonstrate very fast searching from desired dataset (xlsx, csv, json, jsonl) using typesense.
+## This is a streamlit application to demonstrate very fast searching from desired dataset (xlsx, csv, json, jsonl) using typesense.
 
-## Installation
+### Installation
 ```sh
 # Clone the repository
 git clone https://github.com/itsvineetkr/Learning-Typesense
