@@ -1,10 +1,19 @@
+import os
+import time
+import requests
 import streamlit as st
 from dotenv import load_dotenv
-import os
 from utils import Typesense
+
+import sounddevice as sd
+import base64
+import io
+import wave
+
 
 load_dotenv()
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 ts = Typesense(
     nodes=[{"host": "localhost", "port": "8108", "protocol": "http"}],
@@ -91,7 +100,7 @@ elif page == "Search & Sort":
 
         sort_field = st.selectbox("Sort By Field", fields)
         sort_order = st.radio("Sort Order", ["asc", "desc"])
-
+        
         if st.button("Search"):
             try:
                 results = ts.search_typed_query(
@@ -101,11 +110,51 @@ elif page == "Search & Sort":
                     sort_by=sort_field,
                     sort_order=sort_order,
                 )
-                df, found, time_taken = results
+                df, found, out_of, time_taken = results
 
                 st.write("Search Results")
-                st.write(f"{found}")
-                st.write(f"{time_taken}")
+                
+                st.write(f"Took {time_taken} milliseconds for typesense to search query")
+                st.write(f"Found {found} result(s) out of {out_of}")
+                
                 st.dataframe(df)
+
+            except Exception as e:
+                st.error(f"Search Error: {e}")
+
+            
+        st.write("Voice Search")
+
+        audio_file = st.audio_input("Record a voice message (Working: Using external Whisper from HF)")
+        if audio_file:
+            start_time = time.time()
+            audio_data = audio_file.read()
+            headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
+            response = requests.post(
+                "https://api-inference.huggingface.co/models/openai/whisper-large-v3-turbo",
+                headers=headers,
+                data=audio_data,
+            )
+            transcript = response.json()["text"]
+            end_time = time.time()
+            execution_time = end_time - start_time
+            try:
+                results = ts.search_typed_query(
+                    collection_name=collection_name,
+                    query=transcript,
+                    query_by=search_field,
+                    sort_by=sort_field,
+                    sort_order=sort_order,
+                )
+                df, found, out_of, time_taken = results
+
+                st.write("Search Results")
+                
+                st.write(f"Took {time_taken} milliseconds for typesense to search query")
+                st.write(f"Took {execution_time:.2f} seconds for generating transcript")
+                st.write(f"Found {found} result(s) out of {out_of}")
+                
+                st.dataframe(df)
+
             except Exception as e:
                 st.error(f"Search Error: {e}")

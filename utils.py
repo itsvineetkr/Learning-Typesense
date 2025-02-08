@@ -1,6 +1,8 @@
 import typesense
 import pandas as pd
 import json
+import base64
+import requests
 
 
 class Typesense:
@@ -127,7 +129,37 @@ class Typesense:
             else:
                 break
 
-        found = f"found {result["found"]} result out of {result["out_of"]}"
-        time_taken = f"took {result["search_time_ms"]} ms"
+        found = result["found"] 
+        out_of = result["out_of"]
+        time_taken = result["search_time_ms"]
         df = pd.DataFrame(hits)
-        return df, found, time_taken
+        return df, found, out_of, time_taken
+    
+    def search_voice_query(
+        self,
+        collection_name: str,
+        audio_data,
+        query_by: str,
+        sort_by: str,
+        sort_order: str,
+        ):
+
+        search_parameters = {
+            "searches": [
+                {
+                    "collection": collection_name, 
+                    "query_by": query_by, 
+                    "voice_query": audio_data, 
+                    "sort_by": f"{sort_by}:{sort_order}",
+                    "per_page": 250,
+                    "page": 1,
+                }
+            ]
+        }
+
+
+        TYPESENSE_HOST = "http://localhost:8108/multi_search"
+        headers = {"X-TYPESENSE-API-KEY": self.api_key}
+        response = requests.post(TYPESENSE_HOST, json=search_parameters, headers=headers)
+        
+        return response.json()
