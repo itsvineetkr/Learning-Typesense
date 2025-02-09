@@ -5,12 +5,6 @@ import streamlit as st
 from dotenv import load_dotenv
 from utils import Typesense
 
-import sounddevice as sd
-import base64
-import io
-import wave
-
-
 load_dotenv()
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
@@ -23,6 +17,7 @@ ts = Typesense(
 st.set_page_config(page_title="Typesense UI", page_icon="🔍", layout="wide")
 page = st.sidebar.radio("Navigation", ["Manage Collections", "Search & Sort"])
 
+
 if page == "Manage Collections":
     st.title("Manage Collections")
 
@@ -32,9 +27,8 @@ if page == "Manage Collections":
         st.subheader("Create a New Collection")
         collection_name = st.text_input("Collection Name")
 
-        # Schema Creation
         st.write("Define Schema")
-        schema = []
+        fields = []
         num_fields = st.number_input("Number of Fields", min_value=1, step=1, value=1)
 
         for i in range(num_fields):
@@ -49,10 +43,16 @@ if page == "Manage Collections":
             with col3:
                 is_facet = st.checkbox(f"Facet? {i+1}")
 
-            schema.append({"name": field_name, "type": field_type, "facet": is_facet})
+            fields.append({"name": field_name, "type": field_type, "facet": is_facet})
+
+        schema = {
+            "name": collection_name,
+            "fields": fields,
+            "voice_query_model": {"model_name": "ts/whisper/base.en"},
+        }
 
         if st.button("Create Collection"):
-            response = ts.create_collection({"name": collection_name, "fields": schema})
+            response = ts.create_collection(schema)
             st.success(f"{response}")
 
         st.write("Upload Data File")
@@ -100,7 +100,7 @@ elif page == "Search & Sort":
 
         sort_field = st.selectbox("Sort By Field", fields)
         sort_order = st.radio("Sort Order", ["asc", "desc"])
-        
+
         if st.button("Search"):
             try:
                 results = ts.search_typed_query(
@@ -113,19 +113,22 @@ elif page == "Search & Sort":
                 df, found, out_of, time_taken = results
 
                 st.write("Search Results")
-                
-                st.write(f"Took {time_taken} milliseconds for typesense to search query")
+
+                st.write(
+                    f"Took {time_taken} milliseconds for typesense to search query"
+                )
                 st.write(f"Found {found} result(s) out of {out_of}")
-                
+
                 st.dataframe(df)
 
             except Exception as e:
                 st.error(f"Search Error: {e}")
 
-            
-        st.write("Voice Search")
+        st.write(
+            "Voice Search: Record a voice message (Working: Using external Whisper from HF)"
+        )
 
-        audio_file = st.audio_input("Record a voice message (Working: Using external Whisper from HF)")
+        audio_file = st.audio_input("Record audio")
         if audio_file:
             start_time = time.time()
             audio_data = audio_file.read()
@@ -149,11 +152,13 @@ elif page == "Search & Sort":
                 df, found, out_of, time_taken = results
 
                 st.write("Search Results")
-                
-                st.write(f"Took {time_taken} milliseconds for typesense to search query")
+
+                st.write(
+                    f"Took {time_taken} milliseconds for typesense to search query"
+                )
                 st.write(f"Took {execution_time:.2f} seconds for generating transcript")
                 st.write(f"Found {found} result(s) out of {out_of}")
-                
+
                 st.dataframe(df)
 
             except Exception as e:
