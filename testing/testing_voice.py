@@ -53,10 +53,26 @@ def using_inbuilt():
     }
 
     TYPESENSE_HOST = "http://localhost:8108/multi_search"
-    headers = {"X-TYPESENSE-API-KEY": TYPESENSE_API_KEY}
+    headers = {
+        "X-TYPESENSE-API-KEY": TYPESENSE_API_KEY
+    }
 
     response = requests.post(TYPESENSE_HOST, json=search_parameters, headers=headers)
-    print(response.json())
+    # print(response.json())
+
+
+inbuilt_times = []
+for i in range(5):
+
+    start_time = time.time()
+    using_inbuilt()
+    end_time = time.time()
+
+    execution_time = end_time - start_time
+    inbuilt_times.append(float(execution_time))
+
+avg_inbuilt_time = sum(inbuilt_times) / len(inbuilt_times)
+print(f"Average execution time using inbuilt method: {avg_inbuilt_time} seconds")
 
 
 def using_api():
@@ -81,30 +97,17 @@ def using_api():
     # print(result)
 
 
-inbuilt_times = []
 api_times = []
 
 for i in range(5):
+
     start_time = time.time()
-
-    using_inbuilt()
-
+    using_api()
     end_time = time.time()
+
     execution_time = end_time - start_time
-    inbuilt_times.append(float(execution_time))
-
-# for i in range(5):
-#     start_time = time.time()
-
-#     using_api()
-
-#     end_time = time.time()
-#     execution_time = end_time - start_time
-#     api_times.append(float(execution_time))
+    api_times.append(float(execution_time))
 
 
-avg_inbuilt_time = sum(inbuilt_times) / len(inbuilt_times)
-# avg_api_time = sum(api_times) / len(api_times)
-
-print(f"Average execution time using inbuilt method: {avg_inbuilt_time} seconds")
-# print(f"Average execution time using API method: {avg_api_time} seconds")
+avg_api_time = sum(api_times) / len(api_times)
+print(f"Average execution time using API method: {avg_api_time} seconds")
