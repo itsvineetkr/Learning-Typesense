@@ -163,3 +163,4 @@ elif page == "Search & Sort":
 
             except Exception as e:
                 st.error(f"Search Error: {e}")
+
